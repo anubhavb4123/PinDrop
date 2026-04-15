@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Copy, Check, QrCode } from "lucide-react";
+import { Copy, Check, QrCode, ScanLine } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { formatPin } from "../utils/pinUtils";
 import CountdownTimer from "./CountdownTimer";
@@ -100,19 +100,39 @@ export default function PinDisplay({ pin, expiresAt, onExpire }) {
 
       {/* QR Code */}
       {showQR && (
-        <div className="animate-scale-in" style={{
-          background: 'white',
-          borderRadius: 'var(--radius-lg)',
-          padding: '1.25rem',
-        }}>
-          <QRCodeSVG
-            value={shareUrl}
-            size={180}
-            bgColor="white"
-            fgColor="#0a0a0f"
-            level="M"
-            includeMargin={false}
-          />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.85rem' }}>
+          <div className="animate-scale-in" style={{
+            background: 'white',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.25rem',
+            boxShadow: '0 0 0 1px rgba(255,255,255,0.06)',
+          }}>
+            <QRCodeSVG
+              value={shareUrl}
+              size={180}
+              bgColor="white"
+              fgColor="#0a0a0f"
+              level="M"
+              includeMargin={false}
+            />
+          </div>
+
+          {/* Google Lens tip */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.55rem',
+            padding: '0.65rem 1rem',
+            borderRadius: 'var(--radius-md)',
+            background: 'rgba(66, 133, 244, 0.08)',
+            border: '1px solid rgba(66, 133, 244, 0.2)',
+            maxWidth: '260px',
+          }}>
+            <ScanLine size={15} style={{ flexShrink: 0, color: '#4285f4', marginTop: '1px' }} />
+            <span style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
+              To scan this QR, open <strong style={{ color: '#a8c7fa' }}>Google Lens</strong> and scan it.
+            </span>
+          </div>
         </div>
       )}
 
