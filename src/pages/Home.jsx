@@ -29,7 +29,7 @@ export default function Home() {
           fontWeight: 500,
         }}>
           <Zap size={14} />
-          <span>Instant cross-device sharing</span>
+          <span>Blazing-fast cross-device sharing</span>
         </div>
 
         {/* Heading */}
@@ -54,7 +54,7 @@ export default function Home() {
           marginBottom: '3rem',
           opacity: 0,
         }}>
-          Paste text or upload a file, get a PIN. Use it on any device to instantly retrieve your data. No login, no hassle.
+          Paste text or upload a file, get a 6-digit PIN. Retrieve it instantly on any device. No login, no friction, no limits.
         </p>
 
         {/* CTA Buttons */}

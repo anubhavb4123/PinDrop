@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { MapPin, Send, Download } from "lucide-react";
+import { Zap, Send, Download } from "lucide-react";
 
 export default function Header() {
   const location = useLocation();
@@ -36,14 +36,14 @@ export default function Header() {
             borderRadius: '10px',
             background: 'linear-gradient(135deg, var(--color-accent), var(--color-purple))',
           }}>
-            <MapPin size={20} color="white" />
+            <Zap size={20} color="white" fill="white" />
           </div>
           <span style={{
             fontSize: '1.35rem',
             fontWeight: 800,
             letterSpacing: '-0.02em',
           }}>
-            Pin<span className="gradient-text">Drop</span>
+            Share<span className="gradient-text">Jet</span>
           </span>
         </Link>
 

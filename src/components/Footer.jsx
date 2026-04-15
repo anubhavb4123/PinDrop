@@ -1,4 +1,4 @@
-import { Heart, MapPin, ExternalLink, Mail } from "lucide-react";
+import { Heart, Zap, ExternalLink, Mail } from "lucide-react";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -56,16 +56,16 @@ export default function Footer() {
                   justifyContent: "center",
                 }}
               >
-                <MapPin size={16} color="white" />
+                <Zap size={16} color="white" fill="white" />
               </div>
               <span
                 style={{
-                  fontWeight: 600,
+                  fontWeight: 700,
                   fontSize: "0.95rem",
                   color: "var(--color-text-primary)",
                 }}
               >
-                PinDrop
+                Share<span style={{ background: "linear-gradient(135deg, #3b82f6, #a855f7)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Jet</span>
               </span>
             </div>
             <p
@@ -74,7 +74,7 @@ export default function Footer() {
                 color: "var(--color-text-muted)",
               }}
             >
-              Instant cross-device sharing
+              Blazing-fast cross-device sharing
             </p>
           </div>
 
@@ -153,7 +153,7 @@ export default function Footer() {
             >
               {[
                 { icon: ExternalLink, url: "https://github.com" },
-                { icon: Mail, url: "mailto:contact@example.com" },
+                { icon: Mail, url: "mailto:anubhavb4123@gmail.com" },
               ].map((social, idx) => {
                 const Icon = social.icon;
                 return (
@@ -210,10 +210,9 @@ export default function Footer() {
               justifyContent: "center",
             }}
           >
-            Made with{" "}
-            <Heart size={12} color="#ef4444" fill="#ef4444" /> by Anubhav Bajpai
+            By Anubhav Bajpai
           </p>
-          <p>&copy; {currentYear} PinDrop. All rights reserved.</p>
+          <p>&copy; {currentYear} ShareJet. All rights reserved.</p>
         </div>
       </div>
     </footer>
