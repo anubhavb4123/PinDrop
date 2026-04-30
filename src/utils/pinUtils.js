@@ -78,7 +78,7 @@ export const ALLOWED_FILE_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
-export const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 /**
  * Validate a file
@@ -86,7 +86,7 @@ export const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 export function validateFile(file) {
   if (!file) return { valid: false, error: "No file selected" };
   if (file.size > MAX_FILE_SIZE) {
-    return { valid: false, error: `File too large. Maximum size is 20MB (${(file.size / 1024 / 1024).toFixed(1)}MB selected)` };
+    return { valid: false, error: `File too large. Maximum size is 10MB (${(file.size / 1024 / 1024).toFixed(1)}MB selected)` };
   }
   if (!ALLOWED_FILE_TYPES.includes(file.type)) {
     return { valid: false, error: "File type not supported. Allowed: images, PDF, ZIP, TXT, DOC" };
