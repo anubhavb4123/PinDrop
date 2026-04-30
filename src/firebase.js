@@ -1,6 +1,5 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
-import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "demo-key",
@@ -21,14 +20,12 @@ export const isFirebaseConfigured = !!(
 
 let app = null;
 let database = null;
-let storage = null;
 
 try {
   app = initializeApp(firebaseConfig);
 
   if (isFirebaseConfigured) {
     database = getDatabase(app);
-    storage = getStorage(app);
   } else {
     console.warn(
       "⚠️ Firebase is not configured. Create a .env file with your Firebase credentials. See .env.example for reference."
@@ -38,4 +35,4 @@ try {
   console.warn("Firebase initialization error:", e.message);
 }
 
-export { database, storage };
+export { database };
