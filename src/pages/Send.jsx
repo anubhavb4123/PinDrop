@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { ref as dbRef, set } from "firebase/database";
-import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import { database, storage } from "../firebase";
+import { database } from "../firebase";
 import { generateUniquePin } from "../utils/pinUtils";
 import { Type, FileUp, Loader2, ArrowLeft, Send as SendIcon } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -36,17 +35,21 @@ export default function Send() {
           expiresAt: expiresAt,
         });
       } else {
-        // Upload file to Firebase Storage
-        const fileRef = storageRef(storage, `uploads/${pin}/${file.name}`);
-        await uploadBytes(fileRef, file);
-        const fileUrl = await getDownloadURL(fileRef);
+        // Convert file to base64
+        const base64Data = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]); // Strip data URL prefix
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
 
-        // Save file metadata to Realtime Database
+        // Save file as base64 to Realtime Database
         await set(dbRef(database, `pins/${pin}`), {
           type: "file",
           fileName: file.name,
           fileSize: file.size,
-          fileUrl: fileUrl,
+          fileType: file.type,
+          fileData: base64Data,
           createdAt: now,
           expiresAt: expiresAt,
         });
