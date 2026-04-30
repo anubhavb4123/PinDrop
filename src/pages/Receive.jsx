@@ -56,6 +56,19 @@ export default function Receive() {
 
       const pinData = snapshot.val();
 
+      // If it's a file, reconstruct blob URL from base64
+      if (pinData.type === "file" && pinData.fileData) {
+        const byteCharacters = atob(pinData.fileData);
+        const byteArray = new Uint8Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteArray[i] = byteCharacters.charCodeAt(i);
+        }
+        const blob = new Blob([byteArray], {
+          type: pinData.fileType || 'application/octet-stream',
+        });
+        pinData.fileUrl = URL.createObjectURL(blob);
+      }
+
       if (isPinExpired(pinData.expiresAt)) {
         setError("This PIN has expired. PINs are valid for 10 minutes only.");
         toast.error("PIN expired");
