@@ -162,7 +162,7 @@ export default function FileDropzone({ onFileSelect, selectedFile, onClear }) {
             fontSize: '0.75rem',
             color: 'var(--color-text-muted)',
           }}>
-            Images, PDF, ZIP, TXT • Max 20MB
+            Images, PDF, ZIP, TXT • Max 10MB
           </p>
         </div>
       </div>
