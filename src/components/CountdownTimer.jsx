@@ -22,7 +22,7 @@ export default function CountdownTimer({ expiresAt, onExpire }) {
     return () => clearInterval(interval);
   }, [expiresAt, onExpire, remaining]);
 
-  const totalDuration = 600; // 10 minutes in seconds
+  const totalDuration = 600; // 10 minutes in seconds 
   const progress = remaining / totalDuration;
   const circumference = 2 * Math.PI * 45;
   const offset = circumference * (1 - progress);
