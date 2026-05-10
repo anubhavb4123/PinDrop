@@ -94,7 +94,7 @@ export default function FileDropzone({ onFileSelect, selectedFile, onClear }) {
             transition: 'all 0.3s',
             flexShrink: 0,
           }}
-          onMouseEnter={(e) => {
+          onMouseEnter={(e) => { // Change border and icon color to error on hover
             e.currentTarget.style.borderColor = 'var(--color-error)';
             e.currentTarget.style.color = 'var(--color-error)';
           }}
