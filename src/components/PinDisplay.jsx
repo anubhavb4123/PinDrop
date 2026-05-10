@@ -27,7 +27,7 @@ export default function PinDisplay({ pin, expiresAt, onExpire }) {
   };
 
   const shareUrl = `${window.location.origin}/receive?pin=${pin}`;
-
+// For development/testing, you might want to use a localhost URL instead:
   return (
     <div className="animate-scale-in" style={{
       display: 'flex',
