@@ -1,3 +1,4 @@
+// BackgroundOrbs.jsx - Renders decorative background orbs for visual enhancement
 export default function BackgroundOrbs() {
   return (
     <>
