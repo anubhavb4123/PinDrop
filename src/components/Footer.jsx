@@ -20,7 +20,7 @@ export default function Footer() {
           gap: "1.5rem",
         }}
       >
-        {/* Main Content - 3 Columns */}
+        {/* Main Content - 3 Columns  */}
         <div
           style={{
             display: "grid",
