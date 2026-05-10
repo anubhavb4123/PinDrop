@@ -55,7 +55,7 @@ export default function Header() {
     </header>
   );
 }
-
+// Reusable NavLink component for header navigation
 function NavLink({ to, icon, label, active }) {
   return (
     <Link to={to} style={{
