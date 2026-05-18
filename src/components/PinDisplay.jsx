@@ -2,15 +2,17 @@ import { useState } from "react";
 import { Copy, Check, QrCode, ScanLine } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { formatPin } from "../utils/pinUtils";
-import CountdownTimer from "./CountdownTimer";
+import { hapticLight, hapticMedium, hapticSuccess } from "../utils/haptic";
 
-export default function PinDisplay({ pin, expiresAt, onExpire }) {
+export default function PinDisplay({ pin }) {
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
 
   const handleCopy = async () => {
+    hapticMedium();
     try {
       await navigator.clipboard.writeText(pin);
+      hapticSuccess();
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -87,7 +89,7 @@ export default function PinDisplay({ pin, expiresAt, onExpire }) {
 
         <button
           className="btn-secondary"
-          onClick={() => setShowQR(!showQR)}
+          onClick={() => { hapticLight(); setShowQR(!showQR); }}
           style={{
             borderColor: showQR ? 'var(--color-accent)' : undefined,
             color: showQR ? 'var(--color-accent-light)' : undefined,
@@ -136,8 +138,6 @@ export default function PinDisplay({ pin, expiresAt, onExpire }) {
         </div>
       )}
 
-      {/* Countdown Timer */}
-      <CountdownTimer expiresAt={expiresAt} onExpire={onExpire} />
 
       {/* Share URL hint */}
       <p style={{
