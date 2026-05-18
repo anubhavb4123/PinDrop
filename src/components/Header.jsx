@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Zap, Send, Download } from "lucide-react";
+import { hapticLight } from "../utils/haptic";
 
 export default function Header() {
   const location = useLocation();
@@ -58,7 +59,7 @@ export default function Header() {
 // Reusable NavLink component for header navigation
 function NavLink({ to, icon, label, active }) {
   return (
-    <Link to={to} style={{
+    <Link to={to} onClick={hapticLight} style={{
       display: 'flex',
       alignItems: 'center',
       gap: '0.4rem',
