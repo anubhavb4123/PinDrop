@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { ref as dbRef, get } from "firebase/database";
 import { database } from "../firebase";
-import { isPinExpired, formatFileSize } from "../utils/pinUtils";
+import { formatFileSize } from "../utils/pinUtils";
+import { hapticMedium, hapticHeavy, hapticSuccess, hapticError } from "../utils/haptic";
 import {
   Search, Loader2, Copy, Check, Download, FileText,
-  Clock, AlertTriangle, ArrowLeft, File
+  AlertTriangle, ArrowLeft, File, ExternalLink, Link2
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -36,10 +37,12 @@ export default function Receive() {
   const handleSubmit = async (e) => {
     e?.preventDefault();
     if (pin.length !== 6) {
+      hapticError();
       setError("Please enter a valid 6-digit PIN");
       return;
     }
 
+    hapticHeavy();
     setLoading(true);
     setError(null);
     setData(null);
@@ -49,6 +52,7 @@ export default function Receive() {
       const snapshot = await get(pinRef);
 
       if (!snapshot.exists()) {
+        hapticError();
         setError("Invalid PIN. No data found for this PIN.");
         toast.error("Invalid PIN");
         return;
@@ -64,31 +68,29 @@ export default function Receive() {
           byteArray[i] = byteCharacters.charCodeAt(i);
         }
         const blob = new Blob([byteArray], {
-          type: pinData.fileType || 'application/octet-stream',
+          type: pinData.fileType || "application/octet-stream",
         });
         pinData.fileUrl = URL.createObjectURL(blob);
       }
 
-      if (isPinExpired(pinData.expiresAt)) {
-        setError("This PIN has expired. PINs are valid for 10 minutes only.");
-        toast.error("PIN expired");
-        return;
-      }
 
       setData(pinData);
+      hapticSuccess();
       toast.success("Data retrieved successfully!");
 
-      // Auto-copy text if it's text data
-      if (pinData.type === "text") {
+      // Auto-copy text or link content
+      if (pinData.type === "text" || pinData.type === "link") {
         try {
           await navigator.clipboard.writeText(pinData.content);
-          toast("Text auto-copied to clipboard!", { icon: "📋" });
+          const label = pinData.type === "link" ? "Link" : "Text";
+          toast(`${label} auto-copied to clipboard!`, { icon: "📋" });
         } catch {
           // Clipboard API not available
         }
       }
     } catch (err) {
       console.error("Error:", err);
+      hapticError();
       setError("Failed to retrieve data. Please check your connection and try again.");
       toast.error("Network error");
     } finally {
@@ -98,13 +100,13 @@ export default function Receive() {
 
   const handleCopyText = async () => {
     if (!data?.content) return;
+    hapticMedium();
     try {
       await navigator.clipboard.writeText(data.content);
       setCopied(true);
       toast.success("Copied to clipboard!");
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback
       const textArea = document.createElement("textarea");
       textArea.value = data.content;
       document.body.appendChild(textArea);
@@ -117,6 +119,7 @@ export default function Receive() {
   };
 
   const handleReset = () => {
+    hapticMedium();
     setPin("");
     setData(null);
     setError(null);
@@ -124,58 +127,71 @@ export default function Receive() {
   };
 
   return (
-    <div style={{ position: 'relative', zIndex: 1 }}>
-      <div className="max-container" style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: '3rem 1.5rem',
-        minHeight: 'calc(100vh - 200px)',
-      }}>
+    <div style={{ position: "relative", zIndex: 1 }}>
+      <div
+        className="max-container"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "3rem 1.5rem",
+          minHeight: "calc(100vh - 200px)",
+        }}
+      >
         {/* Page Header */}
-        <div className="animate-fade-in-up" style={{
-          textAlign: 'center',
-          marginBottom: '2.5rem',
-        }}>
-          <h1 style={{
-            fontSize: 'clamp(1.8rem, 5vw, 2.5rem)',
-            fontWeight: 800,
-            letterSpacing: '-0.02em',
-            marginBottom: '0.75rem',
-          }}>
+        <div
+          className="animate-fade-in-up"
+          style={{ textAlign: "center", marginBottom: "2.5rem" }}
+        >
+          <h1
+            style={{
+              fontSize: "clamp(1.8rem, 5vw, 2.5rem)",
+              fontWeight: 800,
+              letterSpacing: "-0.02em",
+              marginBottom: "0.75rem",
+            }}
+          >
             <span className="gradient-text">Receive</span> your data
           </h1>
-          <p style={{
-            color: 'var(--color-text-secondary)',
-            fontSize: '1rem',
-            maxWidth: '400px',
-          }}>
-            Enter the 6-digit PIN to retrieve shared text or download a file.
+          <p
+            style={{
+              color: "var(--color-text-secondary)",
+              fontSize: "1rem",
+              maxWidth: "400px",
+            }}
+          >
+            Enter the 6-digit PIN to retrieve shared text, links, or download a file.
           </p>
         </div>
 
         {/* PIN Input Card */}
-        <div className="glass-card-static animate-fade-in-up delay-100" style={{
-          width: '100%',
-          maxWidth: '500px',
-          padding: '2.5rem 2rem',
-          opacity: 0,
-        }}>
+        <div
+          className="glass-card-static animate-fade-in-up delay-100"
+          style={{
+            width: "100%",
+            maxWidth: "500px",
+            padding: "2.5rem 2rem",
+            opacity: 0,
+          }}
+        >
           <form onSubmit={handleSubmit}>
-            {/* PIN Input */}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '1.5rem',
-            }}>
-              <label style={{
-                fontSize: '0.9rem',
-                color: 'var(--color-text-secondary)',
-                fontWeight: 500,
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-              }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "1.5rem",
+              }}
+            >
+              <label
+                style={{
+                  fontSize: "0.9rem",
+                  color: "var(--color-text-secondary)",
+                  fontWeight: 500,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                }}
+              >
                 Enter PIN
               </label>
 
@@ -183,17 +199,21 @@ export default function Receive() {
                 ref={inputRef}
                 type="text"
                 inputMode="numeric"
-                className={`pin-input ${error ? 'animate-shake' : ''}`}
+                className={`pin-input ${error ? "animate-shake" : ""}`}
                 value={pin}
                 onChange={handlePinChange}
                 placeholder="000000"
                 maxLength={6}
                 autoFocus
                 id="pin-input"
-                style={error ? {
-                  borderColor: 'var(--color-error)',
-                  boxShadow: '0 0 0 4px var(--color-error-glow)',
-                } : {}}
+                style={
+                  error
+                    ? {
+                        borderColor: "var(--color-error)",
+                        boxShadow: "0 0 0 4px var(--color-error-glow)",
+                      }
+                    : {}
+                }
               />
 
               <button
@@ -201,11 +221,16 @@ export default function Receive() {
                 className="btn-primary"
                 disabled={pin.length !== 6 || loading}
                 id="get-data-btn"
-                style={{ width: '100%', maxWidth: '400px', fontSize: '1.05rem', padding: '1rem' }}
+                style={{
+                  width: "100%",
+                  maxWidth: "400px",
+                  fontSize: "1.05rem",
+                  padding: "1rem",
+                }}
               >
                 {loading ? (
                   <>
-                    <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                    <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} />
                     <span>Retrieving...</span>
                   </>
                 ) : (
@@ -220,26 +245,31 @@ export default function Receive() {
 
           {/* Error State */}
           {error && (
-            <div className="animate-scale-in" style={{
-              marginTop: '1.5rem',
-              padding: '1rem 1.25rem',
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--color-error-glow)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '0.75rem',
-            }}>
-              {error.includes("expired") ? (
-                <Clock size={18} color="var(--color-error)" style={{ flexShrink: 0, marginTop: '1px' }} />
-              ) : (
-                <AlertTriangle size={18} color="var(--color-error)" style={{ flexShrink: 0, marginTop: '1px' }} />
-              )}
-              <p style={{
-                fontSize: '0.9rem',
-                color: 'var(--color-error)',
-                lineHeight: 1.5,
-              }}>
+            <div
+              className="animate-scale-in"
+              style={{
+                marginTop: "1.5rem",
+                padding: "1rem 1.25rem",
+                borderRadius: "var(--radius-md)",
+                background: "var(--color-error-glow)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "0.75rem",
+              }}
+            >
+              <AlertTriangle
+                size={18}
+                color="var(--color-error)"
+                style={{ flexShrink: 0, marginTop: "1px" }}
+              />
+              <p
+                style={{
+                  fontSize: "0.9rem",
+                  color: "var(--color-error)",
+                  lineHeight: 1.5,
+                }}
+              >
                 {error}
               </p>
             </div>
@@ -248,57 +278,75 @@ export default function Receive() {
 
         {/* Data Result */}
         {data && (
-          <div className="glass-card-static animate-scale-in" style={{
-            width: '100%',
-            maxWidth: '500px',
-            marginTop: '1.5rem',
-            overflow: 'hidden',
-          }}>
+          <div
+            className="glass-card-static animate-scale-in"
+            style={{
+              width: "100%",
+              maxWidth: "500px",
+              marginTop: "1.5rem",
+              overflow: "hidden",
+            }}
+          >
             {/* Result Header */}
-            <div style={{
-              padding: '1rem 1.5rem',
-              background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(108, 99, 255, 0.08))',
-              borderBottom: '1px solid var(--color-border)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-            }}>
+            <div
+              style={{
+                padding: "1rem 1.5rem",
+                background:
+                  "linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(108, 99, 255, 0.08))",
+                borderBottom: "1px solid var(--color-border)",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+              }}
+            >
               {data.type === "text" ? (
                 <FileText size={18} color="var(--color-success)" />
+              ) : data.type === "link" ? (
+                <Link2 size={18} color="var(--color-accent)" />
               ) : (
                 <File size={18} color="var(--color-accent)" />
               )}
-              <span style={{
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                color: 'var(--color-success)',
-              }}>
-                {data.type === "text" ? "Text Retrieved" : "File Ready"}
+              <span
+                style={{
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  color: "var(--color-success)",
+                }}
+              >
+                {data.type === "text"
+                  ? "Text Retrieved"
+                  : data.type === "link"
+                  ? "Link Retrieved"
+                  : "File Ready"}
               </span>
             </div>
 
-            <div style={{ padding: '1.5rem' }}>
+            <div style={{ padding: "1.5rem" }}>
               {data.type === "text" ? (
                 <>
                   {/* Text Content */}
-                  <div style={{
-                    background: 'var(--color-bg-primary)',
-                    borderRadius: 'var(--radius-md)',
-                    padding: '1.25rem',
-                    maxHeight: '300px',
-                    overflow: 'auto',
-                    marginBottom: '1rem',
-                    border: '1px solid var(--color-border)',
-                  }}>
-                    <pre style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '0.88rem',
-                      lineHeight: 1.7,
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                      color: 'var(--color-text-primary)',
-                      margin: 0,
-                    }}>
+                  <div
+                    style={{
+                      background: "var(--color-bg-primary)",
+                      borderRadius: "var(--radius-md)",
+                      padding: "1.25rem",
+                      maxHeight: "300px",
+                      overflow: "auto",
+                      marginBottom: "1rem",
+                      border: "1px solid var(--color-border)",
+                    }}
+                  >
+                    <pre
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "0.88rem",
+                        lineHeight: 1.7,
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                        color: "var(--color-text-primary)",
+                        margin: 0,
+                      }}
+                    >
                       {data.content}
                     </pre>
                   </div>
@@ -307,55 +355,137 @@ export default function Receive() {
                     className="btn-secondary"
                     onClick={handleCopyText}
                     style={{
-                      width: '100%',
-                      borderColor: copied ? 'var(--color-success)' : undefined,
-                      color: copied ? 'var(--color-success)' : undefined,
+                      width: "100%",
+                      borderColor: copied ? "var(--color-success)" : undefined,
+                      color: copied ? "var(--color-success)" : undefined,
                     }}
                   >
                     {copied ? <Check size={16} /> : <Copy size={16} />}
                     <span>{copied ? "Copied!" : "Copy Text"}</span>
                   </button>
                 </>
+              ) : data.type === "link" ? (
+                <>
+                  {/* Link Preview */}
+                  <div
+                    style={{
+                      background: "var(--color-bg-primary)",
+                      borderRadius: "var(--radius-md)",
+                      padding: "1rem 1.25rem",
+                      marginBottom: "1rem",
+                      border: "1px solid var(--color-border)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.75rem",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "36px",
+                        height: "36px",
+                        borderRadius: "var(--radius-md)",
+                        background: "var(--color-accent-subtle)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Link2 size={18} color="var(--color-accent)" />
+                    </div>
+                    <p
+                      style={{
+                        fontSize: "0.85rem",
+                        color: "var(--color-text-secondary)",
+                        wordBreak: "break-all",
+                        lineHeight: 1.5,
+                        flex: 1,
+                        margin: 0,
+                      }}
+                    >
+                      {data.content}
+                    </p>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                    <a
+                      href={data.content}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ textDecoration: "none", display: "block" }}
+                    >
+                      <button
+                        className="btn-primary"
+                        style={{ width: "100%", fontSize: "1rem", padding: "0.875rem" }}
+                      >
+                        <ExternalLink size={18} />
+                        <span>Open Link</span>
+                      </button>
+                    </a>
+
+                    <button
+                      className="btn-secondary"
+                      onClick={handleCopyText}
+                      style={{
+                        width: "100%",
+                        borderColor: copied ? "var(--color-success)" : undefined,
+                        color: copied ? "var(--color-success)" : undefined,
+                      }}
+                    >
+                      {copied ? <Check size={16} /> : <Copy size={16} />}
+                      <span>{copied ? "Copied!" : "Copy Link"}</span>
+                    </button>
+                  </div>
+                </>
               ) : (
                 <>
                   {/* File Info */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                    marginBottom: '1.25rem',
-                    padding: '1rem',
-                    background: 'var(--color-bg-primary)',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--color-border)',
-                  }}>
-                    <div style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: 'var(--radius-md)',
-                      background: 'var(--color-accent-subtle)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "1rem",
+                      marginBottom: "1.25rem",
+                      padding: "1rem",
+                      background: "var(--color-bg-primary)",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--color-border)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "46px",
+                        height: "46px",
+                        borderRadius: "var(--radius-md)",
+                        background: "var(--color-accent-subtle)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
                       <File size={22} color="var(--color-accent)" />
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <p style={{
-                        fontWeight: 600,
-                        fontSize: '0.95rem',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}>
+                      <p
+                        style={{
+                          fontWeight: 600,
+                          fontSize: "0.95rem",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
                         {data.fileName}
                       </p>
-                      <p style={{
-                        fontSize: '0.8rem',
-                        color: 'var(--color-text-muted)',
-                        marginTop: '0.15rem',
-                      }}>
+                      <p
+                        style={{
+                          fontSize: "0.8rem",
+                          color: "var(--color-text-muted)",
+                          marginTop: "0.15rem",
+                        }}
+                      >
                         {formatFileSize(data.fileSize)}
                       </p>
                     </div>
@@ -366,13 +496,12 @@ export default function Receive() {
                     target="_blank"
                     rel="noopener noreferrer"
                     download={data.fileName}
-                    style={{ textDecoration: 'none', display: 'block' }}
+                    style={{ textDecoration: "none", display: "block" }}
                   >
-                    <button className="btn-primary" style={{
-                      width: '100%',
-                      fontSize: '1rem',
-                      padding: '0.875rem',
-                    }}>
+                    <button
+                      className="btn-primary"
+                      style={{ width: "100%", fontSize: "1rem", padding: "0.875rem" }}
+                    >
                       <Download size={18} />
                       <span>Download File</span>
                     </button>
@@ -388,7 +517,7 @@ export default function Receive() {
           <button
             className="btn-secondary animate-fade-in"
             onClick={handleReset}
-            style={{ marginTop: '1.5rem' }}
+            style={{ marginTop: "1.5rem" }}
           >
             <ArrowLeft size={16} />
             <span>Try another PIN</span>
@@ -397,18 +526,24 @@ export default function Receive() {
 
         {/* Bottom Link */}
         {!data && !error && (
-          <p className="animate-fade-in delay-300" style={{
-            marginTop: '2rem',
-            fontSize: '0.85rem',
-            color: 'var(--color-text-muted)',
-            opacity: 0,
-          }}>
+          <p
+            className="animate-fade-in delay-300"
+            style={{
+              marginTop: "2rem",
+              fontSize: "0.85rem",
+              color: "var(--color-text-muted)",
+              opacity: 0,
+            }}
+          >
             Need to share?{" "}
-            <Link to="/send" style={{
-              color: 'var(--color-accent)',
-              textDecoration: 'none',
-              fontWeight: 500,
-            }}>
+            <Link
+              to="/send"
+              style={{
+                color: "var(--color-accent)",
+                textDecoration: "none",
+                fontWeight: 500,
+              }}
+            >
               Send data →
             </Link>
           </p>
