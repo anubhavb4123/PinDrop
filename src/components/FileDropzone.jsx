@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { Upload, File, X, AlertCircle } from "lucide-react";
 import { validateFile, formatFileSize } from "../utils/pinUtils";
+import { hapticLight, hapticMedium, hapticError } from "../utils/haptic";
 
 export default function FileDropzone({ onFileSelect, selectedFile, onClear }) {
   const [dragOver, setDragOver] = useState(false);
@@ -10,15 +11,18 @@ export default function FileDropzone({ onFileSelect, selectedFile, onClear }) {
     setError(null);
     const validation = validateFile(file);
     if (!validation.valid) {
+      hapticError();
       setError(validation.error);
       return;
     }
+    hapticMedium();
     onFileSelect(file);
   }, [onFileSelect]);
 
   const handleDrop = useCallback((e) => {
     e.preventDefault();
     setDragOver(false);
+    hapticMedium();
     const file = e.dataTransfer.files[0];
     if (file) handleFile(file);
   }, [handleFile]);
@@ -79,7 +83,7 @@ export default function FileDropzone({ onFileSelect, selectedFile, onClear }) {
           </p>
         </div>
         <button
-          onClick={onClear}
+          onClick={() => { hapticLight(); onClear(); }}
           style={{
             width: '36px',
             height: '36px',
