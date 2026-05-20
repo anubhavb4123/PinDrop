@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Zap, Send, Download } from "lucide-react";
+import { Zap, Send, Download, QrCode } from "lucide-react";
 import { hapticLight } from "../utils/haptic";
 
 export default function Header() {
@@ -51,6 +51,7 @@ export default function Header() {
         <nav style={{ display: 'flex', gap: '0.5rem' }}>
           <NavLink to="/send" icon={<Send size={16} />} label="Send" active={location.pathname === '/send'} />
           <NavLink to="/receive" icon={<Download size={16} />} label="Receive" active={location.pathname === '/receive'} />
+          <NavLink to="/optical" icon={<QrCode size={16} />} label="Optical" active={location.pathname === '/optical'} />
         </nav>
       </div>
     </header>
