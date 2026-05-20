@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Send, Download, Zap, Shield, Clock, Smartphone } from "lucide-react";
+import { Send, Download, Zap, Shield, Clock, Smartphone, QrCode } from "lucide-react";
 
 export default function Home() {
   return (
@@ -127,7 +127,40 @@ export default function Home() {
             description="Works on any device with a browser. Desktop, tablet, or mobile — anywhere."
             delay="0.4s"
           />
+          <FeatureCard
+            icon={<QrCode size={24} />}
+            title="Optical QR Transfer"
+            description="Transfer files between devices using animated QR codes — no WiFi, Bluetooth, or internet needed."
+            delay="0.5s"
+          />
         </div>
+
+        {/* Optical CTA */}
+        <Link to="/optical" style={{ textDecoration: 'none', display: 'block', maxWidth: '600px', margin: '2rem auto 0' }}>
+          <div className="glass-card" style={{
+            padding: '1.5rem 2rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+            cursor: 'pointer',
+            border: '1px solid rgba(0,255,204,0.1)',
+            background: 'linear-gradient(135deg, rgba(0,255,204,0.03), rgba(108,99,255,0.03))',
+          }}>
+            <div style={{
+              width: '48px', height: '48px', borderRadius: '12px',
+              background: 'rgba(0,255,204,0.08)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              <QrCode size={24} color="#00ffcc" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.2rem' }}>
+                Try <span style={{ color: '#00ffcc' }}>Optical QR Transfer</span> →
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Completely offline, peer-to-peer visual data transfer</p>
+            </div>
+          </div>
+        </Link>
       </section>
     </div>
   );
