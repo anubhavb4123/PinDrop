@@ -450,6 +450,113 @@ textarea.input-field {
   padding: 0 1.5rem;
 }
 
+/* ---- Optical Transfer ---- */
+
+/* Scan line animation - sweeps vertically across camera preview */
+@keyframes scanSweep {
+  0% { top: 0%; }
+  50% { top: 95%; }
+  100% { top: 0%; }
+}
+
+/* QR glow border pulsing */
+.qr-glow {
+  border-radius: 20px;
+  background: rgba(0,0,0,0.3);
+}
+
+.qr-glow::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 22px;
+  background: conic-gradient(from 0deg, transparent, var(--glow-color, #00ffcc), transparent, var(--glow-color, #00ffcc), transparent);
+  opacity: 0.15;
+  animation: qrSpin 4s linear infinite;
+  z-index: -1;
+}
+
+@keyframes qrSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Mini pulse glow for camera status dot */
+@keyframes pulse-glow-mini {
+  0%, 100% { box-shadow: 0 0 4px currentColor; }
+  50% { box-shadow: 0 0 10px currentColor, 0 0 16px currentColor; }
+}
+
+/* Packet cell receive animation */
+.packet-cell-received {
+  animation: packetFlash 0.3s ease-out;
+}
+
+@keyframes packetFlash {
+  0% { background: #00ffcc; box-shadow: 0 0 8px #00ffcc; }
+  100% { background: #22c55e; box-shadow: none; }
+}
+
+/* Data flow animation for decorative elements */
+@keyframes dataFlow {
+  0% { transform: translateY(0); opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { transform: translateY(-20px); opacity: 0; }
+}
+
+/* Camera container styling */
+.camera-container {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(0,255,204,0.05);
+}
+
+.camera-container:has(video[srcObject]) {
+  border-color: rgba(0,255,204,0.12);
+}
+
+/* Stats bar styling */
+.stats-bar {
+  box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+}
+
+/* ---- Optical Split View ---- */
+.optical-split-view {
+  flex-direction: row; /* side-by-side on desktop */
+}
+
+.optical-qr-panel,
+.optical-camera-panel {
+  min-width: 0;
+}
+
+/* On desktop, make QR larger */
+@media (min-width: 768px) {
+  .optical-split-view {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .optical-qr-panel {
+    flex: 1.1;
+  }
+
+  .optical-camera-panel {
+    flex: 1;
+  }
+}
+
+/* On mobile, stack vertically */
+@media (max-width: 767px) {
+  .optical-split-view {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+
+  .optical-qr-panel,
+  .optical-camera-panel {
+    width: 100%;
+  }
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 640px) {
   .pin-input {
