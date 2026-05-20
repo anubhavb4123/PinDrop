@@ -6,6 +6,7 @@ import BackgroundOrbs from "./components/BackgroundOrbs";
 import Home from "./pages/Home";
 import Send from "./pages/Send";
 import Receive from "./pages/Receive";
+import OpticalTransfer from "./pages/OpticalTransfer";
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/send" element={<Send />} />
             <Route path="/receive" element={<Receive />} />
+            <Route path="/optical" element={<OpticalTransfer />} />
           </Routes>
         </main>
         <Footer />
