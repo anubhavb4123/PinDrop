@@ -1,6 +1,5 @@
 /**
  * QR Code Encoder — High-performance QR generation for optical transfer.
- * 
  * Generates QR codes to an offscreen canvas using the `qrcode` library.
  * Supports pre-rendering frame queues and dynamic error correction.
  */
