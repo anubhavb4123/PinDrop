@@ -9,7 +9,7 @@ import jsQR from 'jsqr';
 import { decodePacket } from './opticalProtocol';
 
 /**
- * Camera Scanner class — manages video stream and continuous QR decoding.
+Camera Scanner class — manages video stream and continuous QR decoding.
  */
 export class CameraScanner {
   constructor({ onPacketDecoded, onScanResult, facingMode = 'environment' }) {
