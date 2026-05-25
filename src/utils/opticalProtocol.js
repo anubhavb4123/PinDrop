@@ -25,7 +25,7 @@ export const PacketTypeName = Object.fromEntries(
 // ─── Constants ───────────────────────────────────────────────────
 export const MAX_PAYLOAD_BYTES = 800;   // ~800B payload per QR frame (conservative for reliability)
 export const MIN_PAYLOAD_BYTES = 400;
-export const HEADER_SIZE = 19;          // Fixed header: sessionId(4)+frameId(4)+chunkIdx(2)+totalChunks(2)+type(1)+payloadLen(2)+crc(4)
+export const HEADER_SIZE = 19;          
 export const DEFAULT_FPS = 6;
 export const MIN_FPS = 2;
 export const MAX_FPS = 12;
