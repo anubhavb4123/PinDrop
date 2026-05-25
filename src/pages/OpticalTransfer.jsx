@@ -53,7 +53,6 @@ export default function OpticalTransfer() {
   const roleRef = useRef(role);
 
   // Keep refs in sync with state
-  // This allows callbacks to access the latest state without stale closures, especially important for the camera scanner's packet handler.
   useEffect(() => { phaseRef.current = phase; }, [phase]);
   useEffect(() => { roleRef.current = role; }, [role]);
 
