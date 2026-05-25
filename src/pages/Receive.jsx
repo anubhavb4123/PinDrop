@@ -20,7 +20,6 @@ export default function Receive() {
   const inputRef = useRef(null);
 
   // Auto-fill PIN from URL query param
-  // This allows users to share a direct link to the receive page with the PIN pre-entered, improving usability for quick access. For example: /receive?pin=123456
   useEffect(() => {
     const urlPin = searchParams.get("pin");
     if (urlPin && urlPin.length === 6) {
