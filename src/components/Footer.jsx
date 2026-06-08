@@ -210,7 +210,7 @@ export default function Footer() {
               justifyContent: "center",
             }}
           >
-            By Anubhav Bajpai
+            By Anubhav Bajpai & Archit Mishra
           </p>
           <p>&copy; {currentYear} ShareJet. All rights reserved.</p>
         </div>
