@@ -152,7 +152,7 @@ export default function Footer() {
               }}
             >
               {[
-                { icon: ExternalLink, url: "https://github.com" },
+                { icon: ExternalLink, url: "https://anubhavb-tech-hub.web.app/" },
                 { icon: Mail, url: "mailto:anubhavb4123@gmail.com" },
               ].map((social, idx) => {
                 const Icon = social.icon;
