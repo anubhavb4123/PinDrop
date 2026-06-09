@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Upload, Type, Pause, Play, X, Download, Camera, QrCode, Radio, Shield, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Upload, Type, Pause, Play, X, Download, Camera, QrCode, Radio, Shield, ChevronDown, Crosshair, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticError } from '../utils/haptic';
 import { SenderSession, ReceiverSession, PacketType, encodePacket, decodePacket, deriveKey, base64ToUint8Array } from '../utils/opticalProtocol';
@@ -13,7 +13,7 @@ import PacketGrid from '../components/optical/PacketGrid';
 
 export default function OpticalTransfer() {
   // Setup state
-  const [phase, setPhase] = useState('setup'); // setup | sending | receiving | done
+  const [phase, setPhase] = useState('setup'); // setup | aligning | sending | receiving | done
   const [role, setRole] = useState('send');
   const [inputMode, setInputMode] = useState('file');
   const [text, setText] = useState('');
@@ -21,6 +21,10 @@ export default function OpticalTransfer() {
   const [encrypted, setEncrypted] = useState(false);
   const [passphrase, setPassphrase] = useState('');
   const [cameraAvailable, setCameraAvailable] = useState(true);
+
+  // Alignment state
+  const [isAligned, setIsAligned] = useState(false);
+  const alignTimeoutRef = useRef(null);
 
   // Transfer state
   const [qrDataUrl, setQrDataUrl] = useState(null);
@@ -61,15 +65,27 @@ export default function OpticalTransfer() {
     return () => cleanup();
   }, []);
 
-  // Start camera AFTER React renders the video element for the transfer phase
+  // Start camera AFTER React renders the video element for the transfer/alignment phase
   useEffect(() => {
-    if ((phase === 'sending' || phase === 'receiving') && needsCameraRef.current) {
+    if ((phase === 'aligning' || phase === 'sending' || phase === 'receiving') && needsCameraRef.current) {
       needsCameraRef.current = false;
       // Small delay to ensure video element is mounted
       const t = setTimeout(() => startCamera(), 100);
       return () => clearTimeout(t);
     }
   }, [phase]);
+
+  // Track alignment from decode success
+  useEffect(() => {
+    if (phase === 'aligning' && lastDecodeSuccess) {
+      setIsAligned(true);
+      clearTimeout(alignTimeoutRef.current);
+      alignTimeoutRef.current = setTimeout(() => {
+        setIsAligned(false);
+      }, 2500);
+    }
+    return () => clearTimeout(alignTimeoutRef.current);
+  }, [lastDecodeSuccess, phase]);
 
   const cleanup = useCallback(() => {
     scannerRef.current?.stop();
@@ -78,9 +94,50 @@ export default function OpticalTransfer() {
     clearInterval(elapsedRef.current);
   }, []);
 
-  // ── SENDER FLOW ──
-  const startSending = async () => {
+  // ── ALIGNMENT FLOW ──
+  const startAligning = () => {
+    hapticMedium();
+    setIsAligned(false);
+    setLastDecodeSuccess(null);
+    needsCameraRef.current = true;
+    setPhase('aligning');
+    toast('Align both devices...', { icon: '🎯' });
+
+    // Generate a static test QR for alignment
+    generateAlignmentQR();
+  };
+
+  const generateAlignmentQR = async () => {
+    try {
+      const testPacket = {
+        type: PacketType.HANDSHAKE,
+        chunkIndex: 0,
+        totalChunks: 0,
+        payload: 'ALIGN_TEST',
+        checksum: 0,
+      };
+      const url = await generateQRDataUrl(testPacket);
+      setQrDataUrl(url);
+    } catch (err) {
+      console.error('Alignment QR error:', err);
+    }
+  };
+
+  const proceedFromAlignment = async () => {
     hapticHeavy();
+    // Stop the alignment camera/scanner
+    scannerRef.current?.stop();
+    scannerRef.current = null;
+
+    if (role === 'send') {
+      await actualStartSending();
+    } else {
+      await actualStartReceiving();
+    }
+  };
+
+  // ── SENDER FLOW ──
+  const actualStartSending = async () => {
     try {
       let data, fileName, dataType;
       if (inputMode === 'text') {
@@ -161,8 +218,7 @@ export default function OpticalTransfer() {
   };
 
   // ── RECEIVER FLOW ──
-  const startReceiving = async () => {
-    hapticHeavy();
+  const actualStartReceiving = async () => {
     const session = new ReceiverSession();
     sessionRef.current = session;
     needsCameraRef.current = true;
@@ -307,6 +363,8 @@ export default function OpticalTransfer() {
     setElapsed(0);
     setResultData(null);
     setResultMeta(null);
+    setIsAligned(false);
+    setLastDecodeSuccess(null);
     responseQueueRef.current = [];
   };
 
@@ -404,8 +462,8 @@ export default function OpticalTransfer() {
                   )}
                 </div>
 
-                <button className="btn-primary" onClick={startSending} disabled={inputMode === 'text' ? !text.trim() : !file} style={{ width: '100%', fontSize: '1rem', padding: '0.875rem' }}>
-                  <QrCode size={18} /><span>Start Sending</span>
+                <button className="btn-primary" onClick={startAligning} disabled={inputMode === 'text' ? !text.trim() : !file} style={{ width: '100%', fontSize: '1rem', padding: '0.875rem' }}>
+                  <Crosshair size={18} /><span>Align & Send</span>
                 </button>
               </>
             ) : (
@@ -422,8 +480,8 @@ export default function OpticalTransfer() {
                   <input className="input-field" type="password" value={passphrase} onChange={e => setPassphrase(e.target.value)} placeholder="Enter shared passphrase" style={{ marginBottom: '1rem', fontSize: '0.85rem', padding: '0.6rem 1rem' }} />
                 )}
 
-                <button className="btn-primary" onClick={startReceiving} style={{ width: '100%', fontSize: '1rem', padding: '0.875rem' }}>
-                  <Camera size={18} /><span>Start Receiving</span>
+                <button className="btn-primary" onClick={startAligning} style={{ width: '100%', fontSize: '1rem', padding: '0.875rem' }}>
+                  <Crosshair size={18} /><span>Align & Receive</span>
                 </button>
               </>
             )}
@@ -432,6 +490,197 @@ export default function OpticalTransfer() {
           <Link to="/" className="animate-fade-in delay-300" style={{ marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--color-text-muted)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.3rem', opacity: 0 }}>
             <ArrowLeft size={14} /> Back to home
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══ ALIGNMENT PHASE ═══
+  if (phase === 'aligning') {
+    const alignColor = isAligned ? '#22c55e' : '#ef4444';
+    const alignBg = isAligned ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)';
+    const alignBorder = isAligned ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)';
+
+    return (
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <div className="max-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1.5rem 1rem', minHeight: 'calc(100vh - 200px)', gap: '1.25rem' }}>
+          {/* Title */}
+          <div className="animate-fade-in-up" style={{ textAlign: 'center' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 1rem', borderRadius: '100px', background: alignBg, border: `1px solid ${alignBorder}`, marginBottom: '1rem', fontSize: '0.8rem', color: alignColor, fontWeight: 600, transition: 'all 0.4s' }}>
+              <Crosshair size={14} />
+              <span>Device Alignment</span>
+            </div>
+            <h2 style={{ fontSize: 'clamp(1.3rem, 4vw, 1.6rem)', fontWeight: 700, marginBottom: '0.4rem' }}>
+              Align Both Devices
+            </h2>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', maxWidth: '380px' }}>
+              Point both devices' cameras at each other's QR code before starting the transfer.
+            </p>
+          </div>
+
+          {/* Alignment Status — Big Circle */}
+          <div className="animate-scale-in" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem',
+          }}>
+            <div style={{
+              position: 'relative',
+              width: '100px',
+              height: '100px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              {/* Pulsing outer ring */}
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: '50%',
+                border: `3px solid ${alignColor}`,
+                opacity: 0.2,
+                animation: isAligned ? 'alignPulseRing 1.5s ease-in-out infinite' : 'alignPulseRingSlow 3s ease-in-out infinite',
+                transition: 'border-color 0.4s',
+              }} />
+
+              {/* Main circle */}
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                background: alignBg,
+                border: `2px solid ${alignBorder}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: isAligned ? `0 0 30px rgba(34,197,94,0.3)` : `0 0 20px rgba(239,68,68,0.15)`,
+                transition: 'all 0.4s ease',
+              }}>
+                {isAligned ? (
+                  <Check size={36} color="#22c55e" strokeWidth={3} />
+                ) : (
+                  <Crosshair size={36} color="#ef4444" strokeWidth={1.5} style={{ animation: 'alignRingSpin 8s linear infinite' }} />
+                )}
+              </div>
+            </div>
+
+            {/* Status text */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 18px',
+              borderRadius: '20px',
+              background: alignBg,
+              border: `1px solid ${alignBorder}`,
+              transition: 'all 0.4s',
+            }}>
+              <div style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: alignColor,
+                boxShadow: `0 0 8px ${alignColor}`,
+                animation: 'pulse-glow-mini 1.5s ease-in-out infinite',
+                transition: 'all 0.4s',
+              }} />
+              <span style={{
+                fontSize: '0.85rem',
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 700,
+                color: alignColor,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                transition: 'color 0.4s',
+              }}>
+                {isAligned ? 'Aligned' : 'Not Aligned'}
+              </span>
+            </div>
+          </div>
+
+          {/* Camera + QR side-by-side */}
+          <div className="optical-split-view animate-fade-in-up delay-100" style={{
+            display: 'flex',
+            gap: '1.5rem',
+            width: '100%',
+            maxWidth: '800px',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: 0,
+          }}>
+            {/* QR Display */}
+            <div className="optical-qr-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{
+                position: 'relative',
+                width: '200px',
+                height: '200px',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                background: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: `2px solid ${alignBorder}`,
+                boxShadow: `0 4px 20px rgba(0,0,0,0.3)`,
+                transition: 'border-color 0.4s',
+              }}>
+                {qrDataUrl ? (
+                  <img src={qrDataUrl} alt="Alignment QR" style={{ width: '180px', height: '180px', imageRendering: 'pixelated' }} />
+                ) : (
+                  <div style={{ color: '#999', fontSize: '0.8rem' }}>Loading...</div>
+                )}
+              </div>
+              <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>YOUR QR</span>
+            </div>
+
+            {/* Camera Preview */}
+            <div className="optical-camera-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+              <CameraPreview videoRef={videoRef} active={true} lastDecodeSuccess={lastDecodeSuccess} />
+              <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}>YOUR CAMERA</span>
+            </div>
+          </div>
+
+          {/* Instructions */}
+          <div className="animate-fade-in-up delay-200" style={{
+            textAlign: 'center',
+            padding: '0.75rem 1.25rem',
+            borderRadius: '12px',
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            maxWidth: '400px',
+            opacity: 0,
+          }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
+              {isAligned ? (
+                <>✅ Devices are aligned! You can now start the transfer.</>  
+              ) : (
+                <>📱 Place both phones facing each other so each camera can scan the other's QR code. The status will turn <span style={{ color: '#22c55e', fontWeight: 600 }}>green</span> when aligned.</>  
+              )}
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="animate-fade-in-up delay-300" style={{ display: 'flex', gap: '0.75rem', width: '100%', maxWidth: '400px', opacity: 0 }}>
+            <button
+              className="btn-primary"
+              onClick={proceedFromAlignment}
+              disabled={!isAligned}
+              style={{
+                flex: 1,
+                fontSize: '1rem',
+                padding: '0.875rem',
+                opacity: isAligned ? 1 : 0.4,
+                transition: 'opacity 0.4s',
+              }}
+            >
+              <Check size={18} />
+              <span>{role === 'send' ? 'Start Sending' : 'Start Receiving'}</span>
+            </button>
+            <button className="btn-secondary" onClick={handleCancel} style={{ borderColor: 'rgba(239,68,68,0.3)', color: 'var(--color-error)' }}>
+              <X size={16} /><span>Cancel</span>
+            </button>
+          </div>
         </div>
       </div>
     );
